@@ -1,10 +1,13 @@
 package org.nanlu.luojcodesandbox.utils;
 
 import cn.hutool.core.util.StrUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.nanlu.luojcodesandbox.model.ExecuteMessage;
 import org.springframework.util.StopWatch;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProcessUtils {
 
@@ -29,7 +32,7 @@ public class ProcessUtils {
             //正常退出
             System.out.println(opName + "成功");
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runProcess.getInputStream()));
-            StringBuilder runOutputStringBuilder = new StringBuilder();
+            List<String> outputStrList = new ArrayList<>();
             String runOutputLine;
             while (true) {
                 try {
@@ -37,36 +40,36 @@ public class ProcessUtils {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                runOutputStringBuilder.append(runOutputLine).append("\n");
+                outputStrList.add(runOutputLine);
             }
-            executeMessage.setMessage(runOutputStringBuilder.toString());
+            executeMessage.setMessage(StringUtils.join(outputStrList, "\n"));
         } else {
             //异常退出
             System.out.println(opName + "失败, 错误码" + exitValue);
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runProcess.getInputStream()));
-            StringBuilder runOutputStringBuilder = new StringBuilder();
             String runOutputLine;
+            List<String> outputStrList = new ArrayList<>();
             while (true) {
                 try {
                     if ((runOutputLine = bufferedReader.readLine()) == null) break;
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                runOutputStringBuilder.append(runOutputLine).append("\n");
+                outputStrList.add(runOutputLine);
             }
-            executeMessage.setMessage(runOutputStringBuilder.toString());
+            executeMessage.setMessage(StringUtils.join(outputStrList, "\n"));
             BufferedReader errorBufferedReader = new BufferedReader(new InputStreamReader(runProcess.getErrorStream()));
-            StringBuilder errprCompileOutputStringBuilder = new StringBuilder();
             String errorCompileOutputLine;
+            List<String> errorOutputStrList = new ArrayList<>();
             while (true) {
                 try {
                     if ((errorCompileOutputLine = errorBufferedReader.readLine()) == null) break;
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                errprCompileOutputStringBuilder.append(errorCompileOutputLine).append("\n")   ;
+                errorOutputStrList.add(errorCompileOutputLine);
             }
-            executeMessage.setErrorMessage(errprCompileOutputStringBuilder.toString());
+            executeMessage.setErrorMessage(StringUtils.join(errorOutputStrList, "\n"));
         }
         stopWatch.stop();
         executeMessage.setTime(stopWatch.getLastTaskTimeMillis());
